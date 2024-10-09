@@ -1,0 +1,16 @@
+From: sender@example.com
+To: receiver@example.com
+Subject: Important Information
+Date: Wed, 13 Jan 2024 12:34:56 +0000
+Message-ID: <1234567890@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+
+Dear Receiver,
+
+This is an example email message to test the email forensics functionality. 
+Please ignore this email.
+
+Regards,
+Sender
