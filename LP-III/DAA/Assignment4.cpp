@@ -1,66 +1,141 @@
-#include <iostream>
-#include <vector>
-#include <cmath>
-
+#include<bits/stdc++.h>
 using namespace std;
 
-// Check if the queen position is valid in the current board configuration
-bool validate_board(const vector<int> &board, int row, int X_i) {
-    for (int i = 0; i < row; i++) {
-        if (board[i] == X_i || abs(board[i] - X_i) == abs(i - row)) {
+bool isSafe(int r , int c , vector<vector<int>>&board , int n )
+{
+    int i = r ; 
+    int j = c;
+
+    //upperleft
+    while(i>=0 && j>=0)
+    {
+        if(board[i][j] == 1)
+        {
             return false;
         }
+        i--;
+        j--;
     }
+    i = r ;
+    j =c ;
+
+    //lowerleft
+    while(i<n && j>=0 )
+    {
+        if(board[i][j] == 1)
+        {
+            return false;
+        }
+        i++;
+        j--;
+    }
+
+    //left
+    i = r ; 
+    j = c;
+    while(j>=0)
+    {
+        if(board[i][j] == 1)
+        {
+            return false;
+        }
+        j--;
+    }
+
+    //upperright
+    i = r ; 
+    j = c ;
+    while(i>=0 && j<n)
+    {
+        if(board[i][j] == 1)
+        {
+            return false;
+        }
+        i--;
+        j++;
+    }
+
+    //lowerright
+    i = r ;
+    j= c ;
+    while(i<n && j<n)
+    {
+        if(board[i][j] == 1)
+        {
+            return false;
+        }
+        i++;
+        j++;
+    }
+
+    //right
+    i = r ; 
+    j = c ;
+    while(j<n)
+    {
+        if(board[i][j] == 1)
+        {
+            return false;
+        }
+        j++;
+    }
+
     return true;
 }
-
-// Print the current board configuration
-void print_board(const vector<int> &board) {
-    for (int i = 0; i < board.size(); i++) {
-        cout << board[i] << " ";
-    }
-    cout << endl;
-    cout << "===" << string(18, '=') << endl;  // Print a separator line
-}
-
-// Solve the N-Queens problem using backtracking
-bool solve_n_queens(vector<int> &board, int N) {
-    print_board(board);
-    int i = 0;
-    while (i < N && board[i] != -1) {
-        i++;
-    }
-    if (i == N) {
-        print_board(board);
-        cout << "Solved!" << endl;
-        return true;
-    }
-
-    // Iterate through possible values of X_i and check for valid boards
-    for (int X_i = 0; X_i < N; X_i++) {
-        if (validate_board(board, i, X_i)) {
-            // If configuration board[i] = X_i is valid, set it and solve recursively
-            vector<int> child_board = board; // Create a copy of the board
-            child_board[i] = X_i;
-            if (solve_n_queens(child_board, N)) {
-                return true;
+void solve(int col , int col1 , vector<vector<int>>&board , int n, int& cnt)
+{
+    if(col==n)
+    {   
+        cnt ++;
+        for(auto c : board)
+        {
+            for(auto x : c)
+            {
+                cout<<x;
             }
+            cout<<endl;
+        }
+        cout<<endl;
+    }
+
+    if(col==col1)
+    {
+        solve(col+1, col1 ,board , n, cnt);
+    }
+
+    for(int i = 0 ;i<n ;i++)
+    {
+        if(isSafe(i,col,board ,n))
+        {
+            board[i][col] = 1;
+            solve(col+1 , col1 , board , n, cnt);
+            board[i][col] =0;
         }
     }
-    return false;
 }
-
-int main() {
-    int N;
-    cout << "Enter the number of queens: ";
-    cin >> N;
-
-    vector<int> board(N, -1); // Initialize the board with -1
-    print_board(board);
-
-    if (!solve_n_queens(board, N)) {
-        cout << "No solution exists for " << N << " queens." << endl;
+int main()
+{
+    cout<<"Enter the size of matrix : ";
+    int n ; 
+    cin>>n;
+    int cnt=0;
+    if(n<4)
+    {
+        cout<<"No possible input for n less than 4"<<endl;
     }
+    vector<vector<int>>board(n , vector<int>(n,0));
+    cout<<"Enter the first queen at the given row and column : "<<endl;
+    cout<<"Enter row : ";
+    int r ; 
+    cin>>r;
+    cout<<"Enter column : ";
+    int c ; 
+    cin>>c;
 
-    return 0;
+    board[r][c] = 1;
+    solve(0,c,board,n,cnt);
+    if(cnt == 0)
+    {
+        cout<<"No possible solution for the given input"<<endl;
+    }
 }
