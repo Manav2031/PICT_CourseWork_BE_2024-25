@@ -1,47 +1,51 @@
 #include <bits/stdc++.h>
-
 using namespace std;
 
-struct Item {
-    int weight;
-    int value;
-};
+// Function to solve 0-1 Knapsack problem using dynamic programming
+int knapsackDP(int capacity, vector<int>& weights, vector<int>& values, int n) {
+    // Creating a DP table to store the maximum values
+    vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0));
 
-int knapsack(int W, vector<Item> &items) {
-    int n = items.size();
-    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));
-
-    for (int i = 1; i <= n; i++) {
-        for (int w = 1; w <= W; w++) {
-            if (items[i - 1].weight <= w) {
-                dp[i][w] = max(dp[i - 1][w], 
-                               dp[i - 1][w - items[i - 1].weight] + items[i - 1].value);
+    // Build table dp[][] in bottom-up manner
+    for (int i = 1; i <= n; ++i) {
+        for (int w = 1; w <= capacity; ++w) {
+            if (weights[i - 1] <= w) {
+                // Maximize value by including or excluding the current item
+                dp[i][w] = max(dp[i - 1][w], values[i - 1] + dp[i - 1][w - weights[i - 1]]);
             } else {
+                // If item can't be included, carry forward the previous value
                 dp[i][w] = dp[i - 1][w];
             }
         }
     }
-
-    return dp[n][W];
+    // Return the maximum value that can be achieved with given capacity
+    return dp[n][capacity];
 }
 
 int main() {
-    int W;
-    cout << "Enter knapsack capacity: ";
-    cin >> W;
+    int n; // Number of items
+    int capacity; // Maximum weight capacity of knapsack
 
-    int n;
-    cout << "Enter number of items: ";
+    cout << "Enter the number of items: ";
     cin >> n;
-
-    vector<Item> items(n);
-    for (int i = 0; i < n; i++) {
-        cout << "Enter weight and value for item " << i + 1 << ": ";
-        cin >> items[i].weight >> items[i].value;
+    
+    vector<int> weights(n), values(n);
+    
+    cout << "Enter the weight and value of each item:\n";
+    for (int i = 0; i < n; ++i) {
+        cout << "Item " << i + 1 << endl;
+        cout<<"Weight: ";
+        cin >> weights[i];
+        cout << "Value: ";
+        cin >> values[i];
     }
 
-    int max_value = knapsack(W, items);
-    cout << "Maximum value: " << max_value << endl;
+    cout << "Enter the maximum capacity of the knapsack: ";
+    cin >> capacity;
+
+    int maxValue = knapsackDP(capacity, weights, values, n);
+
+    cout << "Maximum value in knapsack: " << maxValue << endl;
 
     return 0;
 }
