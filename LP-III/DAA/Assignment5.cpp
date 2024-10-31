@@ -101,8 +101,8 @@ int main() {
     cout << "1.Deterministic Quick Sort\n2.Randomized Quick Sort\n3.Exit\n";
     cout << "Enter your choice: ";
     cin >> ch;
-    switch (ch) {
-    case 1:
+    
+    if (ch == 1) {
       cout << "Original array for deterministic quick sort:\n";
       printArray(arr1);
 
@@ -114,8 +114,8 @@ int main() {
       cout << "Deterministic Quick Sort Comparisons: " << comparisonsDet
            << endl;
       cout << "Deterministic Quick Sort Swaps: " << swapsDet << endl;
-      break;
-    case 2:
+    } 
+    else if (ch == 2) {
       // Perform randomized quick sort
       cout << "\nOriginal array for randomized quick sort:\n";
       printArray(arr2);
@@ -126,10 +126,9 @@ int main() {
       printArray(arr2);
       cout << "Randomized Quick Sort Comparisons: " << comparisonsRand << endl;
       cout << "Randomized Quick Sort Swaps: " << swapsRand << endl;
-      break;
-    case 3:
+    } 
+    else if (ch == 3) {
       exit(0);
-      break;
     }
   }
 
