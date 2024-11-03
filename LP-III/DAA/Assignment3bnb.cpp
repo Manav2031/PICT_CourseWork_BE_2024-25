@@ -7,10 +7,17 @@ struct Item {
     int value;
 };
 
+// Comparator to sort items based on value-to-weight ratio in descending order
+bool cmp(const Item& a, const Item& b) {
+    double r1 = (double)a.value / a.weight;
+    double r2 = (double)b.value / b.weight;
+    return r1 > r2;
+}
+
 // Function to calculate the upper bound for a node
-int bound(int currentValue, int currentWeight, int index, int capacity, vector<Item>& items) {
+double bound(int currentValue, int currentWeight, int index, int capacity, vector<Item>& items) {
     if (currentWeight >= capacity) return 0; // No bound if capacity exceeded
-    int boundValue = currentValue;
+    double boundValue = currentValue;
     int totalWeight = currentWeight;
 
     for (int i = index; i < items.size(); ++i) {
@@ -18,7 +25,8 @@ int bound(int currentValue, int currentWeight, int index, int capacity, vector<I
             totalWeight += items[i].weight;
             boundValue += items[i].value;
         } else {
-            boundValue += items[i].value * (capacity - totalWeight) / items[i].weight;
+            // Calculate fractional value for the remaining capacity
+            boundValue += items[i].value * (double)(capacity - totalWeight) / items[i].weight;
             break;
         }
     }
@@ -34,7 +42,7 @@ int knapsackBB(int index, int currentWeight, int currentValue, int capacity, vec
     if (currentValue > maxValue) maxValue = currentValue;
 
     // Calculate bound to decide whether to explore this branch
-    int upperBound = bound(currentValue, currentWeight, index + 1, capacity, items);
+    double upperBound = bound(currentValue, currentWeight, index + 1, capacity, items);
     if (upperBound <= maxValue) return maxValue; // Prune if bound is not promising
 
     // Recursive calls
@@ -59,6 +67,9 @@ int main() {
     }
     cout << "Enter the knapsack capacity: ";
     cin >> capacity;
+
+    // Sort items by value-to-weight ratio in descending order
+    sort(items.begin(), items.end(), cmp);
 
     int maxValue = 0;
     knapsackBB(0, 0, 0, capacity, items, maxValue);
