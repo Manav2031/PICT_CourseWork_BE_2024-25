@@ -1,107 +1,143 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <cstdlib>
+#include <chrono>
+#include <cuda_runtime.h>
 
 using namespace std;
 using namespace std::chrono;
 
-__global__ void add(int *A, int *B, int *C, int size)
+// ---------------------- VECTOR ADDITION --------------------------
+__global__ void vectorAddCUDA(int *a, int *b, int *c, int n)
 {
-    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx < n)
+        c[idx] = a[idx] + b[idx];
+}
 
-    if (tid < size)
+void vectorAddCPU(int *a, int *b, int *c, int n)
+{
+    for (int i = 0; i < n; i++)
+        c[i] = a[i] + b[i];
+}
+
+// ---------------------- MATRIX MULTIPLICATION ---------------------
+__global__ void matrixMulCUDA(int *a, int *b, int *c, int N)
+{
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < N && col < N)
     {
-        C[tid] = A[tid] + B[tid];
+        int sum = 0;
+        for (int k = 0; k < N; k++)
+            sum += a[row * N + k] * b[k * N + col];
+        c[row * N + col] = sum;
     }
 }
 
-void initialize(int *vector, int size)
+void matrixMulCPU(int *a, int *b, int *c, int N)
 {
-    for (int i = 0; i < size; i++)
-    {
-        cout << "Enter element " << i + 1 << " of the vector: ";
-        cin >> vector[i];
-    }
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+        {
+            int sum = 0;
+            for (int k = 0; k < N; k++)
+                sum += a[i * N + k] * b[k * N + j];
+            c[i * N + j] = sum;
+        }
 }
 
-void print(int *vector, int size)
-{
-    for (int i = 0; i < size; i++)
-    {
-        cout << vector[i] << " ";
-    }
-    cout << endl;
-}
-
-void sequentialAddition(int *A, int *B, int *C, int size)
-{
-    for (int i = 0; i < size; i++)
-    {
-        C[i] = A[i] + B[i];
-    }
-}
-
+// ------------------------ MAIN FUNCTION ---------------------------
 int main()
 {
-    int N;
-    cout << "Enter the size of the vectors: ";
-    cin >> N;
+    const int vecSize = 1 << 24; // ~16 million
+    const int matrixSize = 1024; // 1024x1024 matrix
 
-    int *A, *B, *C;
+    // ------------------ Vector Addition ------------------
+    int *h_a = new int[vecSize];
+    int *h_b = new int[vecSize];
+    int *h_c_cpu = new int[vecSize];
+    int *h_c_gpu = new int[vecSize];
 
-    int vectorSize = N;
-    size_t vectorBytes = vectorSize * sizeof(int);
+    for (int i = 0; i < vecSize; ++i)
+    {
+        h_a[i] = rand() % 100;
+        h_b[i] = rand() % 100;
+    }
 
-    A = new int[vectorSize];
-    B = new int[vectorSize];
-    C = new int[vectorSize];
-
-    initialize(A, vectorSize);
-    initialize(B, vectorSize);
-
-    cout << "Vector A: ";
-    print(A, N);
-    cout << "Vector B: ";
-    print(B, N);
-
-    int *X, *Y, *Z;
-    cudaMalloc(&X, vectorBytes);
-    cudaMalloc(&Y, vectorBytes);
-    cudaMalloc(&Z, vectorBytes);
-
-    cudaMemcpy(X, A, vectorBytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(Y, B, vectorBytes, cudaMemcpyHostToDevice);
-
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
-
-    // Sequential addition
     auto start = high_resolution_clock::now();
-    sequentialAddition(A, B, C, N);
-    auto stop = high_resolution_clock::now();
-    auto seq_duration = duration_cast<microseconds>(stop - start);
+    vectorAddCPU(h_a, h_b, h_c_cpu, vecSize);
+    auto end = high_resolution_clock::now();
+    cout << "[Vector Addition - CPU] Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
 
-    cout << "Sequential Addition: ";
-    print(C, N);
+    int *d_a, *d_b, *d_c;
+    cudaMalloc(&d_a, vecSize * sizeof(int));
+    cudaMalloc(&d_b, vecSize * sizeof(int));
+    cudaMalloc(&d_c, vecSize * sizeof(int));
 
-    // Parallel addition
+    cudaMemcpy(d_a, h_a, vecSize * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_b, vecSize * sizeof(int), cudaMemcpyHostToDevice);
+
     start = high_resolution_clock::now();
-    add<<<blocksPerGrid, threadsPerBlock>>>(X, Y, Z, N);
-    cudaMemcpy(C, Z, vectorBytes, cudaMemcpyDeviceToHost);
-    stop = high_resolution_clock::now();
-    auto par_duration = duration_cast<microseconds>(stop - start);
+    vectorAddCUDA<<<(vecSize + 255) / 256, 256>>>(d_a, d_b, d_c, vecSize);
+    cudaDeviceSynchronize();
+    end = high_resolution_clock::now();
 
-    cout << "Parallel Addition: ";
-    print(C, N);
+    cudaMemcpy(h_c_gpu, d_c, vecSize * sizeof(int), cudaMemcpyDeviceToHost);
+    cout << "[Vector Addition - GPU] Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n\n";
 
-    cout << "Sequential Addition Time: " << seq_duration.count() << " microseconds" << endl;
-    cout << "Parallel Addition Time: " << par_duration.count() << " microseconds" << endl;
+    // ------------------ Matrix Multiplication ------------------
+    int *matA = new int[matrixSize * matrixSize];
+    int *matB = new int[matrixSize * matrixSize];
+    int *matC_cpu = new int[matrixSize * matrixSize];
+    int *matC_gpu = new int[matrixSize * matrixSize];
 
-    delete[] A;
-    delete[] B;
-    delete[] C;
+    for (int i = 0; i < matrixSize * matrixSize; ++i)
+    {
+        matA[i] = rand() % 100;
+        matB[i] = rand() % 100;
+    }
 
-    cudaFree(X);
-    cudaFree(Y);
-    cudaFree(Z);
+    start = high_resolution_clock::now();
+    matrixMulCPU(matA, matB, matC_cpu, matrixSize);
+    end = high_resolution_clock::now();
+    cout << "[Matrix Multiplication - CPU] Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+
+    int *d_matA, *d_matB, *d_matC;
+    size_t bytes = matrixSize * matrixSize * sizeof(int);
+    cudaMalloc(&d_matA, bytes);
+    cudaMalloc(&d_matB, bytes);
+    cudaMalloc(&d_matC, bytes);
+
+    cudaMemcpy(d_matA, matA, bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_matB, matB, bytes, cudaMemcpyHostToDevice);
+
+    dim3 threadsPerBlock(16, 16);
+    dim3 blocksPerGrid((matrixSize + 15) / 16, (matrixSize + 15) / 16);
+
+    start = high_resolution_clock::now();
+    matrixMulCUDA<<<blocksPerGrid, threadsPerBlock>>>(d_matA, d_matB, d_matC, matrixSize);
+    cudaDeviceSynchronize();
+    end = high_resolution_clock::now();
+    cudaMemcpy(matC_gpu, d_matC, bytes, cudaMemcpyDeviceToHost);
+
+    cout << "[Matrix Multiplication - GPU] Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+
+    // Cleanup
+    delete[] h_a;
+    delete[] h_b;
+    delete[] h_c_cpu;
+    delete[] h_c_gpu;
+    delete[] matA;
+    delete[] matB;
+    delete[] matC_cpu;
+    delete[] matC_gpu;
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+    cudaFree(d_matA);
+    cudaFree(d_matB);
+    cudaFree(d_matC);
 
     return 0;
 }
