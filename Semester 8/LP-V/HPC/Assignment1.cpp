@@ -26,7 +26,7 @@ public:
         adj[v].push_back(u); // Undirected
     }
 
-    void sequentialBFS(int start)
+    void sequentialBFS(int start, vector<int> &bfsSequence)
     {
         vector<bool> visited(V, false);
         queue<int> q;
@@ -37,6 +37,8 @@ public:
         {
             int node = q.front();
             q.pop();
+            bfsSequence.push_back(node);
+
             for (int neighbor : adj[node])
             {
                 if (!visited[neighbor])
@@ -88,7 +90,7 @@ public:
         }
     }
 
-    void sequentialDFS(int start)
+    void sequentialDFS(int start, vector<int> &dfsSequence)
     {
         vector<bool> visited(V, false);
         stack<int> s;
@@ -101,11 +103,13 @@ public:
             if (!visited[node])
             {
                 visited[node] = true;
-                for (int neighbor : adj[node])
+                dfsSequence.push_back(node);
+
+                for (auto it = adj[node].rbegin(); it != adj[node].rend(); ++it)
                 {
-                    if (!visited[neighbor])
+                    if (!visited[*it])
                     {
-                        s.push(neighbor);
+                        s.push(*it);
                     }
                 }
             }
@@ -125,6 +129,7 @@ public:
             if (!visited[node])
             {
                 visited[node] = true;
+
 #pragma omp parallel for
                 for (int i = 0; i < adj[node].size(); ++i)
                 {
@@ -142,7 +147,7 @@ public:
 
 int main()
 {
-    int V = 100000;
+    int V = 1000; // Reduced for clarity when printing sequences
     Graph g(V);
 
     // Add edges to make a sparse graph (or adjust for density)
@@ -155,20 +160,30 @@ int main()
         }
     }
 
+    vector<int> bfsSequence, dfsSequence;
+
     auto start = high_resolution_clock::now();
-    g.sequentialBFS(0);
+    g.sequentialBFS(0, bfsSequence);
     auto end = high_resolution_clock::now();
     cout << "Sequential BFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    cout << "BFS Sequence: ";
+    for (int node : bfsSequence)
+        cout << node << " ";
+    cout << "\n\n";
 
     start = high_resolution_clock::now();
     g.parallelBFS(0);
     end = high_resolution_clock::now();
-    cout << "Parallel BFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    cout << "Parallel BFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n\n";
 
     start = high_resolution_clock::now();
-    g.sequentialDFS(0);
+    g.sequentialDFS(0, dfsSequence);
     end = high_resolution_clock::now();
     cout << "Sequential DFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    cout << "DFS Sequence: ";
+    for (int node : dfsSequence)
+        cout << node << " ";
+    cout << "\n\n";
 
     start = high_resolution_clock::now();
     g.parallelDFS(0);

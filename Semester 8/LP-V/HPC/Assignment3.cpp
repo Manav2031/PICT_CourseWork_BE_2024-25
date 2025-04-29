@@ -15,7 +15,7 @@ void fillArray(vector<int> &arr)
         arr[i] = size - i; // Reverse order
 }
 
-void sequentialOps(const vector<int> &arr, int &min_val, int &max_val, long long &sum_val, double &avg_val)
+void sequentialOps(vector<int> &arr, int &min_val, int &max_val, long long &sum_val, double &avg_val)
 {
     min_val = INT_MAX;
     max_val = INT_MIN;
@@ -32,7 +32,7 @@ void sequentialOps(const vector<int> &arr, int &min_val, int &max_val, long long
     avg_val = (double)sum_val / arr.size();
 }
 
-void parallelOps(const vector<int> &arr, int &min_val, int &max_val, long long &sum_val, double &avg_val)
+void parallelOps(vector<int> &arr, int &min_val, int &max_val, long long &sum_val, double &avg_val)
 {
     min_val = INT_MAX;
     max_val = INT_MIN;
@@ -57,7 +57,7 @@ void parallelOps(const vector<int> &arr, int &min_val, int &max_val, long long &
 
 int main()
 {
-    const int size = 100000000;
+    int size = 100000000;
     vector<int> arr(size);
     fillArray(arr);
 

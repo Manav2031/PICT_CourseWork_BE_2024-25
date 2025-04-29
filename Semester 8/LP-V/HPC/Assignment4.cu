@@ -18,6 +18,9 @@ void vectorAddCPU(int *a, int *b, int *c, int n)
 {
     for (int i = 0; i < n; i++)
         c[i] = a[i] + b[i];
+    for (int i = 0; i < n; i++)
+        cout << c[i] << " ";
+    cout << endl;
 }
 
 // ---------------------- MATRIX MULTIPLICATION ---------------------
@@ -45,6 +48,15 @@ void matrixMulCPU(int *a, int *b, int *c, int N)
                 sum += a[i * N + k] * b[k * N + j];
             c[i * N + j] = sum;
         }
+
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            cout << c[i * N + j] << " ";
+        }
+        cout << endl;
+    }
 }
 
 // ------------------------ MAIN FUNCTION ---------------------------

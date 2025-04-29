@@ -95,14 +95,24 @@ void parallelMergeSort(vector<int> &arr, int l, int r, int depth = 0)
     }
 }
 
+// ------------------ PRINT FUNCTION ------------------
+
+void printArray(vector<int> &arr, const string &label, int limit = 100)
+{
+    cout << label << " (first " << limit << " elements): ";
+    for (int i = 0; i < min((int)arr.size(), limit); ++i)
+        cout << arr[i] << " ";
+    cout << "\n\n";
+}
+
 // ------------------ MAIN ------------------
 
 int main()
 {
-    const int size = 100000;
+    int size = 100000;
     vector<int> arr(size), temp;
 
-    // Fill array with values from 1 to 100000 in reverse for worst-case sorting
+    // Fill array in reverse order for worst-case sorting
     for (int i = 0; i < size; ++i)
         arr[i] = size - i;
 
@@ -111,24 +121,28 @@ int main()
     sequentialBubbleSort(temp);
     auto end = high_resolution_clock::now();
     cout << "Sequential Bubble Sort: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    printArray(temp, "Sorted Array (Sequential Bubble Sort)");
 
     temp = arr;
     start = high_resolution_clock::now();
     parallelBubbleSort(temp);
     end = high_resolution_clock::now();
     cout << "Parallel Bubble Sort:   " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    printArray(temp, "Sorted Array (Parallel Bubble Sort)");
 
     temp = arr;
     start = high_resolution_clock::now();
     sequentialMergeSort(temp, 0, temp.size() - 1);
     end = high_resolution_clock::now();
     cout << "Sequential Merge Sort:  " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    printArray(temp, "Sorted Array (Sequential Merge Sort)");
 
     temp = arr;
     start = high_resolution_clock::now();
     parallelMergeSort(temp, 0, temp.size() - 1);
     end = high_resolution_clock::now();
     cout << "Parallel Merge Sort:    " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    printArray(temp, "Sorted Array (Parallel Merge Sort)");
 
     return 0;
 }
