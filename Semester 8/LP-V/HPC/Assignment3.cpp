@@ -3,85 +3,74 @@
 using namespace std;
 using namespace std::chrono;
 
-void fillArray(vector<int> &arr)
+// Sequential computation
+void sequential_operations(vector<int> &arr, int &min_val, int &max_val, long long &sum, double &avg)
 {
-    int size = arr.size();
-#pragma omp parallel for
-    for (int i = 0; i < size; ++i)
-        arr[i] = size - i; // Reverse order
+    min_val = *min_element(arr.begin(), arr.end());
+    max_val = *max_element(arr.begin(), arr.end());
+    sum = accumulate(arr.begin(), arr.end(), 0ll);
+    avg = double(sum) / arr.size();
 }
 
-void sequentialOps(vector<int> &arr, int &min_val, int &max_val, long long &sum_val, double &avg_val)
+// Parallel computation using OpenMP
+void parallel_operations(vector<int> &arr, int &min_val, int &max_val, long long &sum, double &avg)
 {
+    int n = arr.size();
     min_val = INT_MAX;
     max_val = INT_MIN;
-    sum_val = 0;
+    sum = 0;
 
-    for (int i = 0; i < arr.size(); ++i)
+// Parallel Min and Max using OpenMP
+#pragma omp parallel for reduction(min : min_val) reduction(max : max_val)
+    for (int i = 0; i < n; ++i)
     {
-        if (arr[i] < min_val)
-            min_val = arr[i];
+        min_val = min(min_val, arr[i]);
+        max_val = max(max_val, arr[i]);
     }
-    for (int i = 0; i < arr.size(); ++i)
+
+// Parallel Sum using OpenMP
+#pragma omp parallel for reduction(+ : sum)
+    for (int i = 0; i < n; ++i)
     {
-        if (arr[i] > max_val)
-            max_val = arr[i];
+        sum += arr[i];
     }
-    for (int i = 0; i < arr.size(); ++i)
-    {
-        sum_val += arr[i];
-    }
-    avg_val = (double)sum_val / arr.size();
-}
 
-void parallelOps(vector<int> &arr, int &min_val, int &max_val, long long &sum_val, double &avg_val)
-{
-    min_val = INT_MAX;
-    max_val = INT_MIN;
-    sum_val = 0;
-
-#pragma omp parallel for reduction(min : min_val)
-    for (int i = 0; i < arr.size(); ++i)
-        if (arr[i] < min_val)
-            min_val = arr[i];
-
-#pragma omp parallel for reduction(max : max_val)
-    for (int i = 0; i < arr.size(); ++i)
-        if (arr[i] > max_val)
-            max_val = arr[i];
-
-#pragma omp parallel for reduction(+ : sum_val)
-    for (int i = 0; i < arr.size(); ++i)
-        sum_val += arr[i];
-
-    avg_val = (double)sum_val / arr.size();
+    avg = double(sum) / n;
 }
 
 int main()
 {
-    int size = 100000000;
-    vector<int> arr(size);
-    fillArray(arr);
+    // Generate a large vector with random numbers
+    int n = 100000000;
+    vector<int> arr(n);
+    for (int i = 0; i < n; ++i)
+    {
+        arr[i] = n - i;
+    }
 
     int min_val, max_val;
-    long long sum_val;
-    double avg_val;
+    long long sum;
+    double avg;
 
-    // Sequential
+    // Measure execution time for sequential operations
     auto start = high_resolution_clock::now();
-    sequentialOps(arr, min_val, max_val, sum_val, avg_val);
+    sequential_operations(arr, min_val, max_val, sum, avg);
     auto end = high_resolution_clock::now();
-    cout << "Sequential:\nMin: " << min_val << ", Max: " << max_val
-         << ", Sum: " << sum_val << ", Average: " << avg_val
-         << "\nTime: " << duration_cast<milliseconds>(end - start).count() << " ms\n\n";
+    duration<double> sequential_time = end - start;
 
-    // Parallel
+    cout << "\nSequential Results:" << endl;
+    cout << "Min: " << min_val << ", Max: " << max_val << ", Sum: " << sum << ", Average: " << avg << endl;
+    cout << "Time taken for sequential: " << sequential_time.count() << " seconds" << endl;
+
+    // Measure execution time for parallel operations
     start = high_resolution_clock::now();
-    parallelOps(arr, min_val, max_val, sum_val, avg_val);
+    parallel_operations(arr, min_val, max_val, sum, avg);
     end = high_resolution_clock::now();
-    cout << "Parallel:\nMin: " << min_val << ", Max: " << max_val
-         << ", Sum: " << sum_val << ", Average: " << avg_val
-         << "\nTime: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    duration<double> parallel_time = end - start;
+
+    cout << "\nParallel Results:" << endl;
+    cout << "Min: " << min_val << ", Max: " << max_val << ", Sum: " << sum << ", Average: " << avg << endl;
+    cout << "Time taken for parallel: " << parallel_time.count() << " seconds" << endl;
 
     return 0;
 }
