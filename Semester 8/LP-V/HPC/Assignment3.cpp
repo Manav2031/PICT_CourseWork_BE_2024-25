@@ -1,8 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <climits>
-#include <chrono>
-#include <omp.h>
+#include <bits/stdc++.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -25,8 +21,14 @@ void sequentialOps(vector<int> &arr, int &min_val, int &max_val, long long &sum_
     {
         if (arr[i] < min_val)
             min_val = arr[i];
+    }
+    for (int i = 0; i < arr.size(); ++i)
+    {
         if (arr[i] > max_val)
             max_val = arr[i];
+    }
+    for (int i = 0; i < arr.size(); ++i)
+    {
         sum_val += arr[i];
     }
     avg_val = (double)sum_val / arr.size();
