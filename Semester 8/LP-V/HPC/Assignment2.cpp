@@ -17,16 +17,30 @@ void bubbleSortSequential(vector<int> &arr)
 void bubbleSortParallel(vector<int> &arr)
 {
     int n = arr.size();
-#pragma omp parallel
+    for (int i = 0; i < n; i++)
     {
-        for (int i = 0; i < n; i++)
+        if (i % 2 == 0)
         {
-            int start = i % 2;
-#pragma omp for
-            for (int j = start; j < n - 1; j += 2)
+// Even phase
+#pragma omp parallel for
+            for (int j = 0; j < n - 1; j += 2)
             {
                 if (arr[j] > arr[j + 1])
+                {
                     swap(arr[j], arr[j + 1]);
+                }
+            }
+        }
+        else
+        {
+// Odd phase
+#pragma omp parallel for
+            for (int j = 1; j < n - 1; j += 2)
+            {
+                if (arr[j] > arr[j + 1])
+                {
+                    swap(arr[j], arr[j + 1]);
+                }
             }
         }
     }
