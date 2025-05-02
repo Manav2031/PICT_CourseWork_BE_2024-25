@@ -137,6 +137,3 @@ int main()
 
     return 0;
 }
-
-// g++ -o sorting parallel_bubble_merge_sort.cpp -fopenmp
-// ./sorting
