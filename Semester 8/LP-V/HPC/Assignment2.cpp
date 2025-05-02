@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
-#include <omp.h>
+
 using namespace std;
+using namespace std::chrono;
 
 // Sequential Bubble Sort
 void bubbleSortSequential(vector<int> &arr)
@@ -102,35 +103,37 @@ int main()
 
     vector<int> arr1 = arr, arr2 = arr, arr3 = arr, arr4 = arr;
 
-    double start, end;
-
     // Bubble Sort Sequential
-    start = omp_get_wtime();
+    auto start = high_resolution_clock::now();
     bubbleSortSequential(arr1);
-    end = omp_get_wtime();
+    auto end = high_resolution_clock::now();
+    duration<double> seqbubble = end - start;
     // printArray(arr1);
-    cout << "Sequential Bubble Sort Time: " << end - start << " seconds\n";
+    cout << "Sequential Bubble Sort Time: " << seqbubble.count() << " seconds\n";
 
     // Bubble Sort Parallel
-    start = omp_get_wtime();
+    start = high_resolution_clock::now();
     bubbleSortParallel(arr2);
-    end = omp_get_wtime();
+    end = high_resolution_clock::now();
+    duration<double> parbubble = end - start;
     // printArray(arr2);
-    cout << "Parallel Bubble Sort Time: " << end - start << " seconds\n";
+    cout << "Parallel Bubble Sort Time: " << parbubble.count() << " seconds\n";
 
     // Merge Sort Sequential
-    start = omp_get_wtime();
+    start = high_resolution_clock::now();
     mergeSortSequential(arr3, 0, size - 1);
-    end = omp_get_wtime();
+    end = high_resolution_clock::now();
+    duration<double> seqmerge = end - start;
     // printArray(arr3);
-    cout << "Sequential Merge Sort Time: " << end - start << " seconds\n";
+    cout << "Sequential Merge Sort Time: " << seqmerge.count() << " seconds\n";
 
     // Merge Sort Parallel
-    start = omp_get_wtime();
+    start = high_resolution_clock::now();
     mergeSortParallel(arr4, 0, size - 1);
-    end = omp_get_wtime();
+    end = high_resolution_clock::now();
+    duration<double> parmerge = end - start;
     // printArray(arr4);
-    cout << "Parallel Merge Sort Time: " << end - start << " seconds\n";
+    cout << "Parallel Merge Sort Time: " << parmerge.count() << " seconds\n";
 
     return 0;
 }
