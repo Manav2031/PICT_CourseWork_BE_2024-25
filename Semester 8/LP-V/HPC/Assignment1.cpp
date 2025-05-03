@@ -1,9 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <stack>
-#include <chrono>
-#include <omp.h>
+#include <bits/stdc++.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -26,36 +21,36 @@ public:
         adj[v].push_back(u); // Undirected
     }
 
-    void sequentialBFS(int start, vector<int> &bfsSequence)
+    void sequentialBFS(int start, vector<int> &sbfsSequence)
     {
         vector<bool> visited(V, false);
         queue<int> q;
-        visited[start] = true;
         q.push(start);
+        visited[start] = true;
 
         while (!q.empty())
         {
             int node = q.front();
             q.pop();
-            bfsSequence.push_back(node);
+            sbfsSequence.push_back(node);
 
-            for (int neighbor : adj[node])
+            for (auto neighbor : adj[node])
             {
                 if (!visited[neighbor])
                 {
-                    visited[neighbor] = true;
                     q.push(neighbor);
+                    visited[neighbor] = true;
                 }
             }
         }
     }
 
-    void parallelBFS(int start)
+    void parallelBFS(int start, vector<int> &pbfsSequence)
     {
         vector<bool> visited(V, false);
         queue<int> q;
-        visited[start] = true;
         q.push(start);
+        visited[start] = true;
 
         while (!q.empty())
         {
@@ -65,6 +60,7 @@ public:
             {
                 int node = q.front();
                 q.pop();
+                pbfsSequence.push_back(node);
                 currentLevel.push_back(node);
             }
 
@@ -72,7 +68,7 @@ public:
             for (int i = 0; i < currentLevel.size(); ++i)
             {
                 int node = currentLevel[i];
-                for (int neighbor : adj[node])
+                for (auto neighbor : adj[node])
                 {
                     if (!visited[neighbor])
                     {
@@ -80,8 +76,8 @@ public:
                         {
                             if (!visited[neighbor])
                             {
-                                visited[neighbor] = true;
                                 q.push(neighbor);
+                                visited[neighbor] = true;
                             }
                         }
                     }
@@ -90,54 +86,58 @@ public:
         }
     }
 
-    void sequentialDFS(int start, vector<int> &dfsSequence)
+    void sequentialDFS(int start, vector<int> &sdfsSequence)
     {
         vector<bool> visited(V, false);
         stack<int> s;
         s.push(start);
+        visited[start] = true;
 
         while (!s.empty())
         {
             int node = s.top();
             s.pop();
-            if (!visited[node])
-            {
-                visited[node] = true;
-                dfsSequence.push_back(node);
+            sdfsSequence.push_back(node);
 
-                for (auto it = adj[node].rbegin(); it != adj[node].rend(); ++it)
+            for (auto neighbor : adj[node])
+            {
+                if (!visited[neighbor])
                 {
-                    if (!visited[*it])
-                    {
-                        s.push(*it);
-                    }
+                    s.push(neighbor);
+                    visited[neighbor] = true;
                 }
             }
         }
     }
 
-    void parallelDFS(int start)
+    void parallelDFS(int start, vector<int> &pdfsSequence)
     {
         vector<bool> visited(V, false);
         stack<int> s;
         s.push(start);
+        visited[start] = true;
 
         while (!s.empty())
         {
             int node = s.top();
             s.pop();
-            if (!visited[node])
-            {
-                visited[node] = true;
+            pdfsSequence.push_back(node);
+
+            vector<int> neighbors = adj[node];
 
 #pragma omp parallel for
-                for (int i = 0; i < adj[node].size(); ++i)
+            for (int i = 0; i < neighbors.size(); ++i)
+            {
+                int neighbor = neighbors[i];
+                if (!visited[neighbor])
                 {
-                    int neighbor = adj[node][i];
-                    if (!visited[neighbor])
-                    {
 #pragma omp critical
-                        s.push(neighbor);
+                    {
+                        if (!visited[neighbor])
+                        {
+                            s.push(neighbor);
+                            visited[neighbor] = true;
+                        }
                     }
                 }
             }
@@ -147,48 +147,65 @@ public:
 
 int main()
 {
-    int V = 1000; // Reduced for clarity when printing sequences
+    int V = 100000; // Reduced for clarity when printing sequences
+    int K = 100;    // Tune factor (20) based on experiments; increase for denser graphs
     Graph g(V);
 
-    // Add edges to make a sparse graph (or adjust for density)
-    for (int i = 0; i < V - 1; ++i)
+    // Generate a dense, cyclic graph
+    for (int i = 0; i < V; ++i)
     {
-        g.addEdge(i, i + 1);
-        if (i % 100 == 0 && i + 100 < V)
+        for (int j = 1; j <= K; ++j)
         {
-            g.addEdge(i, i + 100);
+            int neighbor = (i + j) % V;
+            g.addEdge(i, neighbor);
         }
     }
 
-    vector<int> bfsSequence, dfsSequence;
+    vector<int> sbfsSequence, pbfsSequence, sdfsSequence, pdfsSequence;
 
     auto start = high_resolution_clock::now();
-    g.sequentialBFS(0, bfsSequence);
+    g.sequentialBFS(0, sbfsSequence);
     auto end = high_resolution_clock::now();
-    cout << "Sequential BFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
-    cout << "BFS Sequence: ";
-    for (int node : bfsSequence)
-        cout << node << " ";
-    cout << "\n\n";
+    duration<double> sbfstime = end - start;
+    cout << "Sequential BFS Time: " << sbfstime.count() << " seconds" << endl;
+    // cout << "Sequential BFS Traversal: ";
+    // for (auto node : sbfsSequence)
+    //     cout << node << " ";
+    // cout << endl;
+    // cout << endl;
 
     start = high_resolution_clock::now();
-    g.parallelBFS(0);
+    g.parallelBFS(0, pbfsSequence);
     end = high_resolution_clock::now();
-    cout << "Parallel BFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n\n";
+    duration<double> pbfstime = end - start;
+    cout << "Parallel BFS Time: " << pbfstime.count() << " seconds" << endl;
+    // cout << "Parallel BFS Traversal: ";
+    // for (auto node : pbfsSequence)
+    //     cout << node << " ";
+    // cout << endl;
+    // cout << endl;
 
     start = high_resolution_clock::now();
-    g.sequentialDFS(0, dfsSequence);
+    g.sequentialDFS(0, sdfsSequence);
     end = high_resolution_clock::now();
-    cout << "Sequential DFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
-    cout << "DFS Sequence: ";
-    for (int node : dfsSequence)
-        cout << node << " ";
-    cout << "\n\n";
+    duration<double> sdfstime = end - start;
+    cout << "Sequential DFS Time: " << sdfstime.count() << " seconds" << endl;
+    // cout << "Sequential DFS Traversal: ";
+    // for (auto node : sdfsSequence)
+    //     cout << node << " ";
+    // cout << endl;
+    // cout << endl;
 
     start = high_resolution_clock::now();
-    g.parallelDFS(0);
+    g.parallelDFS(0, pdfsSequence);
     end = high_resolution_clock::now();
-    cout << "Parallel DFS Time: " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+    duration<double> pdfstime = end - start;
+    cout << "Parallel DFS Time: " << pdfstime.count() << " seconds" << endl;
+    // cout << "Parallel DFS Traversal: ";
+    // for (auto node : pdfsSequence)
+    //     cout << node << " ";
+    // cout << endl;
+    // cout << endl;
 
     return 0;
 }
