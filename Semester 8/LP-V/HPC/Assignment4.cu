@@ -1,7 +1,4 @@
-#include <iostream>
-#include <cstdlib>
-#include <chrono>
-#include <cuda_runtime.h>
+#include <bits/stdc++.h>
 
 using namespace std;
 using namespace std::chrono;
